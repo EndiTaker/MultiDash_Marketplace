@@ -1,50 +1,72 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  Package, 
-  Warehouse, 
-  TrendingUp, 
-  Settings, 
-  ChevronLeft, 
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  LayoutDashboard,
+  Package,
+  Warehouse,
+  TrendingUp,
+  Settings,
+  ChevronLeft,
   ChevronRight,
   Store,
   Bell,
   LogOut,
   Moon,
-  Sun
-} from 'lucide-react';
-import { useTheme } from '@/context/ThemeContext';
-
-interface SidebarProps {
-  activePage: string;
-  onPageChange: (page: string) => void;
-}
+  Sun,
+} from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface NavItem {
   id: string;
   label: string;
   icon: React.ElementType;
+  path: string;
 }
 
 const navItems: NavItem[] = [
-  { id: 'dashboard', label: 'Дашборд', icon: LayoutDashboard },
-  { id: 'products', label: 'Товары', icon: Package },
-  { id: 'stocks', label: 'Остатки', icon: Warehouse },
-  { id: 'analytics', label: 'Аналитика', icon: TrendingUp },
-  { id: 'marketplaces', label: 'Маркетплейсы', icon: Store },
-  { id: 'settings', label: 'Настройки', icon: Settings },
+  {
+    id: "dashboard",
+    label: "Дашборд",
+    icon: LayoutDashboard,
+    path: "/dashboard",
+  },
+  { id: "products", label: "Товары", icon: Package, path: "/products" },
+  { id: "stocks", label: "Остатки", icon: Warehouse, path: "/stocks" },
+  { id: "analytics", label: "Аналитика", icon: TrendingUp, path: "/analytics" },
+  {
+    id: "marketplaces",
+    label: "Маркетплейсы",
+    icon: Store,
+    path: "/marketplaces",
+  },
+  { id: "settings", label: "Настройки", icon: Settings, path: "/settings" },
 ];
 
-export function Sidebar({ activePage, onPageChange }: SidebarProps) {
+export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleTheme = () => {
-    if (theme === 'system') {
-      setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+    if (theme === "system") {
+      setTheme(resolvedTheme === "dark" ? "light" : "dark");
     } else {
-      setTheme(theme === 'dark' ? 'light' : 'dark');
+      setTheme(theme === "dark" ? "light" : "dark");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("Вы успешно вышли из системы");
+      navigate("/auth");
+    } catch (error) {
+      toast.error("Ошибка при выходе");
     }
   };
 
@@ -52,12 +74,12 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
     <motion.aside
       initial={{ width: 280 }}
       animate={{ width: isCollapsed ? 80 : 280 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
       className="fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-50 flex flex-col"
     >
       {/* Logo */}
       <div className="h-16 flex items-center px-4 border-b border-gray-200 dark:border-gray-800">
-        <motion.div 
+        <motion.div
           className="flex items-center gap-3"
           animate={{ opacity: isCollapsed ? 0 : 1 }}
           transition={{ duration: 0.2 }}
@@ -67,12 +89,14 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
           </div>
           {!isCollapsed && (
             <div>
-              <h1 className="font-bold text-lg text-gray-900 dark:text-white">Marketplace</h1>
+              <h1 className="font-bold text-lg text-gray-900 dark:text-white">
+                Marketplace
+              </h1>
               <p className="text-xs text-gray-500 dark:text-gray-400">Hub</p>
             </div>
           )}
         </motion.div>
-        
+
         {/* Collapse button */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -91,19 +115,21 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
         <ul className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activePage === item.id;
-            
+            const isActive = location.pathname === item.path;
+
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => onPageChange(item.id)}
+                  onClick={() => navigate(item.path)}
                   className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group ${
-                    isActive 
-                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' 
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    isActive
+                      ? "bg-blue-500 text-white shadow-lg shadow-blue-500/25"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'}`} />
+                  <Icon
+                    className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"}`}
+                  />
                   <AnimatePresence mode="wait">
                     {!isCollapsed && (
                       <motion.span
@@ -117,7 +143,7 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
                       </motion.span>
                     )}
                   </AnimatePresence>
-                  
+
                   {/* Active indicator */}
                   {isActive && !isCollapsed && (
                     <motion.div
@@ -139,7 +165,7 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
           onClick={toggleTheme}
           className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
-          {resolvedTheme === 'dark' ? (
+          {resolvedTheme === "dark" ? (
             <Sun className="w-5 h-5" />
           ) : (
             <Moon className="w-5 h-5" />
@@ -153,16 +179,14 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
                 transition={{ duration: 0.2 }}
                 className="font-medium"
               >
-                {resolvedTheme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+                {resolvedTheme === "dark" ? "Светлая тема" : "Тёмная тема"}
               </motion.span>
             )}
           </AnimatePresence>
         </button>
 
         {/* Notifications */}
-        <button
-          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
+        <button className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <div className="relative">
             <Bell className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
@@ -186,6 +210,7 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
 
         {/* Logout */}
         <button
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
         >
           <LogOut className="w-5 h-5" />

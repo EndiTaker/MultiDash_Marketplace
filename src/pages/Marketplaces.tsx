@@ -1,17 +1,10 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Plus, 
-  Check, 
-  X, 
-  RefreshCw,
-  AlertCircle,
-  Power
-} from 'lucide-react';
-import { useMarketplaces } from '@/hooks/useMarketplaces';
-import type { Marketplace } from '@/types/marketplace';
-import { MarketplaceIcon } from '@/components/MarketplaceIcon';
-import { ConnectMarketplaceModal } from '@/components/ConnectMarketplaceModal';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Plus, Check, X, RefreshCw, AlertCircle, Power } from "lucide-react";
+import { useMarketplacesWithSupabase } from "@/hooks/useMarketplacesWithSupabase";
+import type { Marketplace } from "@/types/marketplace";
+import { MarketplaceIcon } from "@/components/MarketplaceIcon";
+import { ConnectMarketplaceModal } from "@/components/ConnectMarketplaceModal";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -27,15 +20,16 @@ const itemVariants = {
 };
 
 export function Marketplaces() {
-  const { 
-    marketplaces, 
-    isLoading, 
-    connectMarketplace, 
-    disconnectMarketplace, 
-    syncMarketplace 
-  } = useMarketplaces();
-  
-  const [selectedMarketplace, setSelectedMarketplace] = useState<Marketplace | null>(null);
+  const {
+    marketplaces,
+    loading,
+    connectMarketplace,
+    disconnectMarketplace,
+    syncMarketplace,
+  } = useMarketplacesWithSupabase();
+
+  const [selectedMarketplace, setSelectedMarketplace] =
+    useState<Marketplace | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleConnect = (marketplace: Marketplace) => {
@@ -45,7 +39,12 @@ export function Marketplaces() {
 
   const handleConnectSubmit = async (apiKey: string, clientId?: string) => {
     if (selectedMarketplace) {
-      await connectMarketplace(selectedMarketplace.id, apiKey, clientId);
+      await connectMarketplace(
+        selectedMarketplace.type,
+        selectedMarketplace.name,
+        apiKey,
+        clientId,
+      );
       setIsModalOpen(false);
       setSelectedMarketplace(null);
     }
@@ -61,7 +60,7 @@ export function Marketplaces() {
     await syncMarketplace(marketplace.id);
   };
 
-  const connectedCount = marketplaces.filter(mp => mp.connected).length;
+  const connectedCount = marketplaces.filter((mp) => mp.connected).length;
 
   return (
     <motion.div
@@ -71,17 +70,24 @@ export function Marketplaces() {
       className="space-y-6"
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
+      <motion.div
+        variants={itemVariants}
+        className="flex items-center justify-between"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Маркетплейсы</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Маркетплейсы
+          </h1>
           <p className="text-gray-500 dark:text-gray-400">
             Управление подключениями к маркетплейсам
           </p>
         </div>
-        
+
         <div className="flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl">
           <Check className="w-5 h-5" />
-          <span className="font-medium">{connectedCount} из {marketplaces.length} подключено</span>
+          <span className="font-medium">
+            {connectedCount} из {marketplaces.length} подключено
+          </span>
         </div>
       </motion.div>
 
@@ -93,18 +99,23 @@ export function Marketplaces() {
         </div>
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white">
           <p className="text-sm text-purple-100">Доступно</p>
-          <p className="text-2xl font-bold">{marketplaces.length - connectedCount}</p>
+          <p className="text-2xl font-bold">
+            {marketplaces.length - connectedCount}
+          </p>
         </div>
         <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white">
           <p className="text-sm text-emerald-100">Активных</p>
           <p className="text-2xl font-bold">
-            {marketplaces.filter(mp => mp.status === 'active').length}
+            {marketplaces.filter((mp) => mp.status === "active").length}
           </p>
         </div>
       </motion.div>
 
       {/* Marketplaces grid */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+      >
         {marketplaces.map((marketplace, index) => (
           <motion.div
             key={marketplace.id}
@@ -112,9 +123,9 @@ export function Marketplaces() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             className={`relative overflow-hidden rounded-2xl border ${
-              marketplace.connected 
-                ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10' 
-                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+              marketplace.connected
+                ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10"
+                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             } p-6 transition-all hover:shadow-lg`}
           >
             {/* Status badge */}
@@ -134,19 +145,20 @@ export function Marketplaces() {
 
             <div className="flex items-start gap-4">
               <MarketplaceIcon type={marketplace.type} size="lg" />
-              
+
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {marketplace.name}
                 </h3>
-                
+
                 {marketplace.connected && marketplace.lastSync && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Последняя синхронизация: {marketplace.lastSync.toLocaleString('ru-RU', {
-                      day: 'numeric',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit',
+                    Последняя синхронизация:{" "}
+                    {marketplace.lastSync.toLocaleString("ru-RU", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
                   </p>
                 )}
@@ -163,10 +175,12 @@ export function Marketplaces() {
                     <>
                       <button
                         onClick={() => handleSync(marketplace)}
-                        disabled={isLoading}
+                        disabled={loading}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors"
                       >
-                        <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                        <RefreshCw
+                          className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+                        />
                         Синхронизировать
                       </button>
                       <button
@@ -196,11 +210,15 @@ export function Marketplaces() {
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-gray-600 dark:text-gray-400">API: активно</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      API: активно
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span className="text-gray-600 dark:text-gray-400">Автосинхронизация: вкл</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Автосинхронизация: вкл
+                    </span>
                   </div>
                 </div>
               </div>
@@ -210,7 +228,10 @@ export function Marketplaces() {
       </motion.div>
 
       {/* Info block */}
-      <motion.div variants={itemVariants} className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
+      <motion.div
+        variants={itemVariants}
+        className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-2xl p-6"
+      >
         <div className="flex items-start gap-4">
           <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
             <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -220,8 +241,9 @@ export function Marketplaces() {
               Как подключить маркетплейс?
             </h3>
             <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-              Для подключения маркетплейса вам потребуется API ключ из личного кабинета продавца. 
-              Нажмите "Подключить" и следуйте инструкциям. Данные будут автоматически синхронизироваться каждые 15 минут.
+              Для подключения маркетплейса вам потребуется API ключ из личного
+              кабинета продавца. Нажмите "Подключить" и следуйте инструкциям.
+              Данные будут автоматически синхронизироваться каждые 15 минут.
             </p>
           </div>
         </div>
@@ -236,7 +258,7 @@ export function Marketplaces() {
           setSelectedMarketplace(null);
         }}
         onConnect={handleConnectSubmit}
-        isLoading={isLoading}
+        isLoading={loading}
       />
     </motion.div>
   );

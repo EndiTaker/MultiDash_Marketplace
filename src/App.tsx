@@ -1,65 +1,42 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ThemeProvider } from '@/context/ThemeContext';
-import { Sidebar } from '@/components/Sidebar';
-import { Dashboard } from '@/pages/Dashboard';
-import { Products } from '@/pages/Products';
-import { Stocks } from '@/pages/Stocks';
-import { Analytics } from '@/pages/Analytics';
-import { Marketplaces } from '@/pages/Marketplaces';
-import { Settings } from '@/pages/Settings';
-import './App.css';
-
-function AppContent() {
-  const [activePage, setActivePage] = useState('dashboard');
-
-  const renderPage = () => {
-    switch (activePage) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'products':
-        return <Products />;
-      case 'stocks':
-        return <Stocks />;
-      case 'analytics':
-        return <Analytics />;
-      case 'marketplaces':
-        return <Marketplaces />;
-      case 'settings':
-        return <Settings />;
-      default:
-        return <Dashboard />;
-    }
-  };
-
-  return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar activePage={activePage} onPageChange={setActivePage} />
-      
-      <main className="flex-1 ml-[280px] transition-all duration-300">
-        <div className="p-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activePage}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {renderPage()}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </main>
-    </div>
-  );
-}
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "@/context/ThemeContext"; // добавлен слеш
+import { Toaster } from "sonner";
+import { Auth } from "@/pages/Auth"; // добавлен слеш
+import { Dashboard } from "@/pages/Dashboard";
+import { Products } from "@/pages/Products";
+import { Stocks } from "@/pages/Stocks";
+import { Analytics } from "@/pages/Analytics";
+import { Marketplaces } from "@/pages/Marketplaces";
+import { Settings } from "@/pages/Settings";
+import { PrivateRoute } from "@/components/PrivateRoute"; // добавлен слеш
+import { Layout } from "@/components/Layout"; // добавлен слеш
 
 function App() {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <BrowserRouter>
+      <ThemeProvider>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <Layout />
+              </PrivateRoute>
+            }
+          >
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="products" element={<Products />} />
+            <Route path="stocks" element={<Stocks />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="marketplaces" element={<Marketplaces />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+        </Routes>
+        <Toaster richColors position="top-right" />
+      </ThemeProvider>
+    </BrowserRouter>
   );
 }
 
