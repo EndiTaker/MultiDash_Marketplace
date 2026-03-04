@@ -1,0 +1,23 @@
+# Директория с зависимостями
+node_modules/
+
+# Сборка
+dist/
+dist-ssr/
+*.local
+
+# Файлы окружения
+.env
+.env.local
+.env.*.local
+
+# Логи
+*.log
+
+# Редакторы
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
