@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Search, 
-  RefreshCw, 
+import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Search,
+  RefreshCw,
   Warehouse,
   Package,
   AlertTriangle,
@@ -10,11 +10,11 @@ import {
   CheckCircle2,
   Edit3,
   Save,
-  X
-} from 'lucide-react';
-import { useStocks } from '@/hooks/useStocks';
-import type { MarketplaceType } from '@/types/marketplace';
-import { MarketplaceBadge } from '@/components/MarketplaceIcon';
+  X,
+} from "lucide-react";
+import { useStocksWithSupabase } from "@/hooks/useStocksWithSupabase";
+import type { MarketplaceType } from "@/types/marketplace";
+import { MarketplaceBadge } from "@/components/MarketplaceIcon";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -31,51 +31,69 @@ const itemVariants = {
 
 const statusConfig = {
   in_stock: {
-    label: 'В наличии',
-    className: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+    label: "В наличии",
+    className:
+      "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
     icon: CheckCircle2,
   },
   low_stock: {
-    label: 'Заканчивается',
-    className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
+    label: "Заканчивается",
+    className:
+      "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400",
     icon: AlertTriangle,
   },
   out_of_stock: {
-    label: 'Нет в наличии',
-    className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+    label: "Нет в наличии",
+    className: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400",
     icon: XCircle,
   },
 };
 
 export function Stocks() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [marketplaceFilter, setMarketplaceFilter] = useState<MarketplaceType | 'all'>('all');
-  const [statusFilter, setStatusFilter] = useState<'in_stock' | 'low_stock' | 'out_of_stock' | 'all'>('all');
-  const [editingStock, setEditingStock] = useState<{ productId: string; warehouseId: string } | null>(null);
-  const [editQuantity, setEditQuantity] = useState('');
-  
-  const { stocks, isLoading, stats, updateStock, refreshStocks } = useStocks({
-    marketplaceType: marketplaceFilter,
-    status: statusFilter,
-    searchQuery,
-  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [marketplaceFilter, setMarketplaceFilter] = useState<
+    MarketplaceType | "all"
+  >("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "in_stock" | "low_stock" | "out_of_stock" | "all"
+  >("all");
+  const [editingStock, setEditingStock] = useState<{
+    productId: string;
+    warehouseId: string;
+  } | null>(null);
+  const [editQuantity, setEditQuantity] = useState("");
 
-  const handleEdit = (productId: string, warehouseId: string, currentQuantity: number) => {
+  const { stocks, loading, stats, updateStock, refreshStocks } =
+    useStocksWithSupabase({
+      marketplaceType: marketplaceFilter,
+      status: statusFilter,
+      searchQuery,
+    });
+
+  const handleEdit = (
+    productId: string,
+    warehouseId: string,
+    currentQuantity: number,
+  ) => {
     setEditingStock({ productId, warehouseId });
     setEditQuantity(currentQuantity.toString());
   };
 
   const handleSave = async () => {
     if (editingStock) {
-      await updateStock(editingStock.productId, editingStock.warehouseId, parseInt(editQuantity));
+      await updateStock(
+        editingStock.productId,
+        editingStock.warehouseId,
+        parseInt(editQuantity),
+      );
       setEditingStock(null);
-      setEditQuantity('');
+      setEditQuantity("");
     }
   };
 
   const handleCancel = () => {
     setEditingStock(null);
-    setEditQuantity('');
+    setEditQuantity("");
   };
 
   return (
@@ -86,70 +104,94 @@ export function Stocks() {
       className="space-y-6"
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
+      <motion.div
+        variants={itemVariants}
+        className="flex items-center justify-between"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Остатки</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Остатки
+          </h1>
           <p className="text-gray-500 dark:text-gray-400">
             Управление остатками на складах маркетплейсов
           </p>
         </div>
-        
+
         <button
           onClick={refreshStocks}
-          disabled={isLoading}
+          disabled={loading}
           className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white font-medium rounded-xl transition-colors"
         >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           Обновить
         </button>
       </motion.div>
 
       {/* Stats */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+      >
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
               <Warehouse className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Всего позиций</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Всего позиций
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {stats.total}
+              </p>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">В наличии</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{stats.inStock}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                В наличии
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {stats.inStock}
+              </p>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
               <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Заканчивается</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{stats.lowStock}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Заканчивается
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {stats.lowStock}
+              </p>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
               <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Нет в наличии</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{stats.outOfStock}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Нет в наличии
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {stats.outOfStock}
+              </p>
             </div>
           </div>
         </div>
@@ -159,20 +201,29 @@ export function Stocks() {
       <motion.div variants={itemVariants} className="grid grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
           <p className="text-sm text-blue-100">Общий остаток</p>
-          <p className="text-2xl font-bold">{stats.totalQuantity.toLocaleString('ru-RU')} шт.</p>
+          <p className="text-2xl font-bold">
+            {stats.totalQuantity.toLocaleString("ru-RU")} шт.
+          </p>
         </div>
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white">
           <p className="text-sm text-purple-100">Зарезервировано</p>
-          <p className="text-2xl font-bold">{stats.totalReserved.toLocaleString('ru-RU')} шт.</p>
+          <p className="text-2xl font-bold">
+            {stats.totalReserved.toLocaleString("ru-RU")} шт.
+          </p>
         </div>
         <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white">
           <p className="text-sm text-emerald-100">Доступно</p>
-          <p className="text-2xl font-bold">{stats.totalAvailable.toLocaleString('ru-RU')} шт.</p>
+          <p className="text-2xl font-bold">
+            {stats.totalAvailable.toLocaleString("ru-RU")} шт.
+          </p>
         </div>
       </motion.div>
 
       {/* Filters */}
-      <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="flex flex-wrap items-center gap-4"
+      >
         {/* Search */}
         <div className="relative flex-1 min-w-[300px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -188,7 +239,9 @@ export function Stocks() {
         {/* Marketplace filter */}
         <select
           value={marketplaceFilter}
-          onChange={(e) => setMarketplaceFilter(e.target.value as MarketplaceType | 'all')}
+          onChange={(e) =>
+            setMarketplaceFilter(e.target.value as MarketplaceType | "all")
+          }
           className="px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">Все площадки</option>
@@ -202,7 +255,7 @@ export function Stocks() {
         {/* Status filter */}
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as 'in_stock' | 'low_stock' | 'out_of_stock' | 'all')}
+          onChange={(e) => setStatusFilter(e.target.value as any)}
           className="px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">Все статусы</option>
@@ -213,26 +266,47 @@ export function Stocks() {
       </motion.div>
 
       {/* Stocks table */}
-      <motion.div variants={itemVariants} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+      <motion.div
+        variants={itemVariants}
+        className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden"
+      >
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                <th className="text-left py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Товар</th>
-                <th className="text-left py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Склад</th>
-                <th className="text-left py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Площадка</th>
-                <th className="text-right py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Всего</th>
-                <th className="text-right py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Зарезерв.</th>
-                <th className="text-right py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Доступно</th>
-                <th className="text-left py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Статус</th>
-                <th className="text-right py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Действия</th>
+                <th className="text-left py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Товар
+                </th>
+                <th className="text-left py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Склад
+                </th>
+                <th className="text-left py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Площадка
+                </th>
+                <th className="text-right py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Всего
+                </th>
+                <th className="text-right py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Зарезерв.
+                </th>
+                <th className="text-right py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Доступно
+                </th>
+                <th className="text-left py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Статус
+                </th>
+                <th className="text-right py-4 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Действия
+                </th>
               </tr>
             </thead>
             <tbody>
               {stocks.map((stock, index) => {
-                const isEditing = editingStock?.productId === stock.productId && editingStock?.warehouseId === stock.warehouseId;
+                const isEditing =
+                  editingStock?.productId === stock.productId &&
+                  editingStock?.warehouseId === stock.warehouseId;
                 const StatusIcon = statusConfig[stock.status].icon;
-                
+
                 return (
                   <motion.tr
                     key={`${stock.productId}-${stock.warehouseId}`}
@@ -247,13 +321,19 @@ export function Stocks() {
                           <Package className="w-5 h-5 text-gray-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white line-clamp-1">{stock.name}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{stock.sku}</p>
+                          <p className="font-medium text-gray-900 dark:text-white line-clamp-1">
+                            {stock.name}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {stock.sku}
+                          </p>
                         </div>
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <p className="text-sm text-gray-900 dark:text-white">{stock.warehouseName}</p>
+                      <p className="text-sm text-gray-900 dark:text-white">
+                        {stock.warehouseName}
+                      </p>
                     </td>
                     <td className="py-4 px-4">
                       <MarketplaceBadge type={stock.marketplaceType} />
@@ -268,25 +348,33 @@ export function Stocks() {
                           autoFocus
                         />
                       ) : (
-                        <span className="font-medium text-gray-900 dark:text-white">{stock.quantity}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {stock.quantity}
+                        </span>
                       )}
                     </td>
                     <td className="py-4 px-4 text-right">
-                      <span className="text-gray-600 dark:text-gray-400">{stock.reserved}</span>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        {stock.reserved}
+                      </span>
                     </td>
                     <td className="py-4 px-4 text-right">
-                      <span className={`font-medium ${
-                        stock.available === 0 
-                          ? 'text-red-600 dark:text-red-400' 
-                          : stock.available <= stock.threshold 
-                            ? 'text-orange-600 dark:text-orange-400' 
-                            : 'text-emerald-600 dark:text-emerald-400'
-                      }`}>
+                      <span
+                        className={`font-medium ${
+                          stock.available === 0
+                            ? "text-red-600 dark:text-red-400"
+                            : stock.available <= stock.threshold
+                              ? "text-orange-600 dark:text-orange-400"
+                              : "text-emerald-600 dark:text-emerald-400"
+                        }`}
+                      >
                         {stock.available}
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig[stock.status].className}`}>
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig[stock.status].className}`}
+                      >
                         <StatusIcon className="w-3.5 h-3.5" />
                         {statusConfig[stock.status].label}
                       </span>
@@ -309,7 +397,13 @@ export function Stocks() {
                         </div>
                       ) : (
                         <button
-                          onClick={() => handleEdit(stock.productId, stock.warehouseId, stock.quantity)}
+                          onClick={() =>
+                            handleEdit(
+                              stock.productId,
+                              stock.warehouseId,
+                              stock.quantity,
+                            )
+                          }
                           className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         >
                           <Edit3 className="w-4 h-4 text-gray-500" />
@@ -326,7 +420,9 @@ export function Stocks() {
         {stocks.length === 0 && (
           <div className="py-12 text-center">
             <Warehouse className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">Остатки не найдены</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              Остатки не найдены
+            </p>
           </div>
         )}
       </motion.div>

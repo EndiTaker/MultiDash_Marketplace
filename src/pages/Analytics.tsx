@@ -1,20 +1,20 @@
-import { motion } from 'framer-motion';
-import { 
-  TrendingUp, 
-  ShoppingCart, 
-  Package, 
+import { motion } from "framer-motion";
+import {
+  TrendingUp,
+  ShoppingCart,
+  Package,
   Wallet,
   Percent,
   BarChart3,
   Calendar,
-  Download
-} from 'lucide-react';
-import { StatCard } from '@/components/StatCard';
-import { RevenueChart } from '@/components/RevenueChart';
-import { MarketplaceDistribution } from '@/components/MarketplaceDistribution';
-import { useAnalytics } from '@/hooks/useAnalytics';
-import type { MarketplaceType } from '@/types/marketplace';
-import { MarketplaceIcon } from '@/components/MarketplaceIcon';
+  Download,
+} from "lucide-react";
+import { StatCard } from "@/components/StatCard";
+import { RevenueChart } from "@/components/RevenueChart";
+import { MarketplaceDistribution } from "@/components/MarketplaceDistribution";
+import { useAnalyticsWithSupabase } from "@/hooks/useAnalyticsWithSupabase";
+import type { MarketplaceType } from "@/types/marketplace";
+import { MarketplaceIcon } from "@/components/MarketplaceIcon";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -30,23 +30,32 @@ const itemVariants = {
 };
 
 const marketplaceNames: Record<MarketplaceType, string> = {
-  ozon: 'Ozon',
-  yandex: 'Яндекс Маркет',
-  wildberries: 'Wildberries',
-  sber: 'СберМегаМаркет',
-  aliexpress: 'AliExpress',
+  ozon: "Ozon",
+  yandex: "Яндекс Маркет",
+  wildberries: "Wildberries",
+  sber: "СберМегаМаркет",
+  aliexpress: "AliExpress",
 };
 
 export function Analytics() {
-  const { data, isLoading, refreshAnalytics, period, setPeriod } = useAnalytics();
+  const { data, loading, refreshAnalytics, period, setPeriod } =
+    useAnalyticsWithSupabase();
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
+    return new Intl.NumberFormat("ru-RU", {
+      style: "currency",
+      currency: "RUB",
       maximumFractionDigits: 0,
     }).format(value);
   };
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -56,39 +65,45 @@ export function Analytics() {
       className="space-y-6"
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
+      <motion.div
+        variants={itemVariants}
+        className="flex items-center justify-between"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Аналитика</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Аналитика
+          </h1>
           <p className="text-gray-500 dark:text-gray-400">
             Детальная аналитика продаж и показателей
           </p>
         </div>
-        
+
         <div className="flex items-center gap-4">
           {/* Period selector */}
           <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-            {(['7d', '30d', '90d', '1y'] as const).map((p) => (
+            {(["7d", "30d", "90d", "1y"] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
+                disabled={loading}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                   period === p
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
+                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                {p === '7d' && '7 дней'}
-                {p === '30d' && '30 дней'}
-                {p === '90d' && '90 дней'}
-                {p === '1y' && 'Год'}
+                {p === "7d" && "7 дней"}
+                {p === "30d" && "30 дней"}
+                {p === "90d" && "90 дней"}
+                {p === "1y" && "Год"}
               </button>
             ))}
           </div>
-          
+
           <button
             onClick={refreshAnalytics}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
             <Download className="w-4 h-4" />
             Экспорт
@@ -97,7 +112,10 @@ export function Analytics() {
       </motion.div>
 
       {/* Stats grid */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         <StatCard
           title="Выручка"
           value={formatCurrency(data.summary.totalRevenue)}
@@ -109,7 +127,7 @@ export function Analytics() {
         />
         <StatCard
           title="Заказы"
-          value={data.summary.totalOrders.toLocaleString('ru-RU')}
+          value={data.summary.totalOrders.toLocaleString("ru-RU")}
           description="Всего заказов"
           icon={ShoppingCart}
           trend={{ value: 8.2, isPositive: true }}
@@ -118,7 +136,7 @@ export function Analytics() {
         />
         <StatCard
           title="Продажи"
-          value={data.summary.totalSales.toLocaleString('ru-RU')}
+          value={data.summary.totalSales.toLocaleString("ru-RU")}
           description="Единиц товара"
           icon={Package}
           trend={{ value: 3.1, isPositive: false }}
@@ -137,7 +155,10 @@ export function Analytics() {
       </motion.div>
 
       {/* Second row stats */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+      >
         <StatCard
           title="Комиссия"
           value={formatCurrency(data.summary.totalCommission)}
@@ -167,7 +188,10 @@ export function Analytics() {
       </motion.div>
 
       {/* Charts row */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+      >
         <div className="lg:col-span-2">
           <RevenueChart data={data.byDay} showOrders />
         </div>
@@ -177,7 +201,10 @@ export function Analytics() {
       </motion.div>
 
       {/* Marketplace breakdown */}
-      <motion.div variants={itemVariants} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+      <motion.div
+        variants={itemVariants}
+        className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm"
+      >
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -193,12 +220,24 @@ export function Analytics() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Площадка</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Заказы</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Продажи</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Выручка</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Комиссия</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Прибыль</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Площадка
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Заказы
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Продажи
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Выручка
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Комиссия
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Прибыль
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -212,17 +251,20 @@ export function Analytics() {
                 >
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
-                      <MarketplaceIcon type={marketplace.marketplaceType} size="sm" />
+                      <MarketplaceIcon
+                        type={marketplace.marketplaceType}
+                        size="sm"
+                      />
                       <span className="font-medium text-gray-900 dark:text-white">
                         {marketplaceNames[marketplace.marketplaceType]}
                       </span>
                     </div>
                   </td>
                   <td className="py-4 px-4 text-right text-sm text-gray-900 dark:text-white">
-                    {marketplace.orders.toLocaleString('ru-RU')}
+                    {marketplace.orders.toLocaleString("ru-RU")}
                   </td>
                   <td className="py-4 px-4 text-right text-sm text-gray-900 dark:text-white">
-                    {marketplace.sales.toLocaleString('ru-RU')}
+                    {marketplace.sales.toLocaleString("ru-RU")}
                   </td>
                   <td className="py-4 px-4 text-right">
                     <span className="font-medium text-gray-900 dark:text-white">
@@ -247,7 +289,10 @@ export function Analytics() {
       </motion.div>
 
       {/* Top products */}
-      <motion.div variants={itemVariants} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+      <motion.div
+        variants={itemVariants}
+        className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm"
+      >
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -263,12 +308,24 @@ export function Analytics() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">#</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Товар</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">SKU</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Продажи</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Выручка</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Средняя цена</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  #
+                </th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Товар
+                </th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  SKU
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Продажи
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Выручка
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Средняя цена
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -281,21 +338,30 @@ export function Analytics() {
                   className="border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                 >
                   <td className="py-4 px-4">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      index === 0 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
-                      index === 1 ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400' :
-                      index === 2 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' :
-                      'bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-500'
-                    }`}>
+                    <span
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        index === 0
+                          ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400"
+                          : index === 1
+                            ? "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400"
+                            : index === 2
+                              ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
+                              : "bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-500"
+                      }`}
+                    >
                       {index + 1}
                     </span>
                   </td>
                   <td className="py-4 px-4">
-                    <span className="font-medium text-gray-900 dark:text-white">{product.name}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {product.name}
+                    </span>
                   </td>
-                  <td className="py-4 px-4 text-sm text-gray-500 dark:text-gray-400">{product.sku}</td>
+                  <td className="py-4 px-4 text-sm text-gray-500 dark:text-gray-400">
+                    {product.sku}
+                  </td>
                   <td className="py-4 px-4 text-right text-sm text-gray-900 dark:text-white">
-                    {product.quantity.toLocaleString('ru-RU')} шт.
+                    {product.quantity.toLocaleString("ru-RU")} шт.
                   </td>
                   <td className="py-4 px-4 text-right">
                     <span className="font-medium text-gray-900 dark:text-white">
@@ -304,7 +370,9 @@ export function Analytics() {
                   </td>
                   <td className="py-4 px-4 text-right">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {formatCurrency(product.revenue / product.quantity)}
+                      {product.quantity > 0
+                        ? formatCurrency(product.revenue / product.quantity)
+                        : "—"}
                     </span>
                   </td>
                 </motion.tr>
